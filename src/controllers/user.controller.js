@@ -39,8 +39,8 @@ const registerUser = asyncHandler(async (req, res) => {
    }
 
    const avatarLocalPath = req.files.avatar[0].path;
-   // const coverIMGLocalPath = req.files.coverIMG[0]?.path;
-   console.log("req.file:", req.files);
+   console.log("req.files:", req.files);
+   const coverIMGLocalPath = req.files.coverIMG[0].path;
    // console.log("req.file.avatar:", req.files?.avatar);
    // console.log("req.file.avatar[0]:", req.file?.avatar);
    // console.log("req.file.avatar[0].path:", req.file?.avatar?.path);
@@ -50,9 +50,9 @@ const registerUser = asyncHandler(async (req, res) => {
       throw new apiError(400, "All fields are required mainly avatar")
    }
    // console.log("avatarLocalPath: ", avatarLocalPath);
-   
+
    const avatar = await uploadOnCloudinary(avatarLocalPath)
-   //   const coverIMG = await uploadOnCloudinary(coverIMGLocalPath)
+   const coverIMG = await uploadOnCloudinary(coverIMGLocalPath)
 
    if (!avatar) {
       console.log("avatar not uploaded" + avatar);
@@ -66,7 +66,7 @@ const registerUser = asyncHandler(async (req, res) => {
       username: username.toLowerCase(),
       password,
       avatar: avatar.url,
-      coverIMG: coverIMG.url || "",
+      coverIMG: coverIMG.url
    })
 
    const newUser = await user.findById(user._id).select("-password -refreshToken")
