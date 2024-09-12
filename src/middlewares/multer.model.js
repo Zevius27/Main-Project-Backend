@@ -1,29 +1,15 @@
-import multer from "multer";
+import multer from 'multer';
 
-let dcounter = 0
-let counter = 0
 const storage = multer.diskStorage({
-   destination: function (req, file, cb) {
-      dcounter++;
-      cb(null, "./public/temp")
+  destination: (req, file, cb) => {
+    cb(null, './public/temp');
+  },
+  filename: (req, file, cb) => {
+    // const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 19);
+    cb(null, file.originalname);
+  },
+});
 
-   },
-   filename: function (req, file, cb) {
-      counter++;
+const upload = multer({ storage });
 
-      // console.log("req:", req);
-      console.log("file:", file);
-
-      cb(null, file.originalname)
-
-      console.log("counter: ", counter);
-      console.log("dcounter: ", dcounter);
-
-   }
-
-})
-
-// console.log("counter: ", counter);
-// console.log("dcounter: ", dcounter);
-
-export const upload = multer({ storage, })
+export { upload };

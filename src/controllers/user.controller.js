@@ -21,13 +21,12 @@ const registerUser = asyncHandler(async (req, res) => {
 
 
    const { fullname, email, username, password } = req.body
-
+   
    //   console.log("email: ", email,
    //    "password: ", password
    //   );
 
    if (!fullname || !email || !username || !password) {
-      // res.status(400)   
       throw new apiError(400, "All fields are required")
    }
    const existedUSER = await userModel.findOne(
@@ -37,10 +36,10 @@ const registerUser = asyncHandler(async (req, res) => {
    if (existedUSER) {
       throw new apiError(409, "User already exists")
    }
-
-   const avatarLocalPath = req.files.avatar[0].path;
-   console.log("req.files:", req.files);
-   const coverIMGLocalPath = req.files.coverIMG[0].path;
+   
+   console.log("req.files:", req.body);
+   // const coverIMGLocalPath = req.files.coverIMG[0].path;
+   const avatarLocalPath = req.files?.avatar[0]?.path;
    // console.log("req.file.avatar:", req.files?.avatar);
    // console.log("req.file.avatar[0]:", req.file?.avatar);
    // console.log("req.file.avatar[0].path:", req.file?.avatar?.path);
@@ -52,7 +51,8 @@ const registerUser = asyncHandler(async (req, res) => {
    // console.log("avatarLocalPath: ", avatarLocalPath);
 
    const avatar = await uploadOnCloudinary(avatarLocalPath)
-   const coverIMG = await uploadOnCloudinary(coverIMGLocalPath)
+   // const coverIMG = await uploadOnCloudinary(coverIMGLocalPath)
+
 
    if (!avatar) {
       console.log("avatar not uploaded" + avatar);
@@ -66,10 +66,10 @@ const registerUser = asyncHandler(async (req, res) => {
       username: username.toLowerCase(),
       password,
       avatar: avatar.url,
-      coverIMG: coverIMG.url
+      // coverIMG: coverIMG.url || ""
    })
 
-   const newUser = await user.findById(user._id).select("-password -refreshToken")
+   const newUser = await userModel.findById(user._id).select("-password -refreshToken")// changed user to userModel
    if (!newUser) {
       throw new apiError(400, "User not created, try again later")
    }
