@@ -21,6 +21,7 @@ const registerUser = asyncHandler(async (req, res) => {
 
 
    const { fullname, email, username, password } = req.body
+   // console.log("email: ", email);
    
    //   console.log("email: ", email,
    //    "password: ", password
@@ -32,13 +33,14 @@ const registerUser = asyncHandler(async (req, res) => {
    const existedUSER = await userModel.findOne(
       { $or: [{ email: email }, { username: username }] }
    )
-
+   
    if (existedUSER) {
       throw new apiError(409, "User already exists")
    }
    
-   console.log("req.files:", req.files);
-   const coverIMGLocalPath = req.files?.coverIMG[0]?.path;
+
+   console.log("req.files:", req.body);
+   // const coverIMGLocalPath = req.files?.coverIMG[0]?.path;
    
    // console.log(  "coverIMG: ", req.files.coverIMG);
    // console.log(  "avatar: ", req.files);
@@ -55,9 +57,8 @@ const registerUser = asyncHandler(async (req, res) => {
    // console.log("avatarLocalPath: ", avatarLocalPath);
 
    const avatar = await uploadOnCloudinary(avatarLocalPath)
-   const coverIMG = await uploadOnCloudinary(coverIMGLocalPath)
-
-
+   // const coverIMG = await uploadOnCloudinary(coverIMGLocalPath)
+ 
    if (!avatar) {
       console.log("avatar not uploaded" + avatar);
 
@@ -70,8 +71,10 @@ const registerUser = asyncHandler(async (req, res) => {
       username: username.toLowerCase(),
       password,
       avatar: avatar.url,
-      coverIMG: coverIMG.url || ""
+      // coverIMG: coverIMG.url || ""
    })
+
+   
 
    const newUser = await userModel.findById(user._id).select("-password -refreshToken")// changed user to userModel
    if (!newUser) {

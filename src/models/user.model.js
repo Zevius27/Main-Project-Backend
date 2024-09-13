@@ -9,7 +9,7 @@ const userSchema = new Schema({
       unique: true,
       lowercase: true,
       trim: true,
-      index: true
+      
    },
    email: {
       type: String,
@@ -17,12 +17,20 @@ const userSchema = new Schema({
       unique: true,
       lowercase: true,
       trim: true,
-
+      index: true,
+      sparse: true,
+      validate: {
+         validator: function(v) {
+            // Regex to validate email format
+            return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
+         },
+         message: props => `${props.value} is not a valid email address!`
+      }
    },
    fullname: {
       type: String,
       required: true,
-      unique: true,
+      // unique: true,
       lowercase: true,
       trim: true,
       index: true
@@ -64,7 +72,7 @@ userSchema.methods.isPasswordCorrect = async function (password) {
 userSchema.methods.generateAccessToken = function () {
    jwt.sign({
       _id: this._id,
-      email: this.Email,
+      email: this.email,
       username: this.username,
       fullname: this.fullname
    }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: process.env.ACCESS_TOKEN_EXPIRY })
@@ -73,9 +81,9 @@ userSchema.methods.generateAccessToken = function () {
 userSchema.methods.generateRefreshToken = function () {
    jwt.sign({
       _id: this._id,
-      email: this.Email,
+      email: this.email,
       username: this.username,
-      fullname: this.fullnamew
+      fullname: this.fullname
    }, process.env.REFRESH_TOKEN_SECRET, { expiresIn: process.env.REFRESH_TOKEN_EXPIRY })
 
 }
