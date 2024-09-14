@@ -70,7 +70,7 @@ userSchema.methods.isPasswordCorrect = async function (password) {
 }
 
 userSchema.methods.generateAccessToken = function () {
-   jwt.sign({
+   jwt.sign({// is short lived
       _id: this._id,
       email: this.email,
       username: this.username,
@@ -79,7 +79,7 @@ userSchema.methods.generateAccessToken = function () {
 }
 
 userSchema.methods.generateRefreshToken = function () {
-   jwt.sign({
+   jwt.sign({// long lived
       _id: this._id,
       email: this.email,
       username: this.username,
