@@ -7,13 +7,22 @@ import { apiError } from "../utils/apiError.js";
 
 
 const generateAccessRefreshTokens = async (userId) => {
+   // console.log("userId: ", userId);
    try {
-      await userModel.findById(userId)
-      const refreshToken = user.generateRefreshToken()
+      
+      const user = await userModel.findById(userId)
+      console.log("user: ", user);
+      
+      const refreshToken = user.generateRefreshToken()// post man sending so generate refresh token function is the problem
+      
       const accessToken = user.generateAccessToken()
       user.refreshToken = refreshToken
+      user.accessToken = accessToken
       await user.save({ vaildateBeforeSave: false })
-
+      
+      console.log("refreshToken: ", refreshToken);
+      console.log("accessToken: ", accessToken);
+      
       return { accessToken, refreshToken }
 
 
@@ -116,7 +125,7 @@ const loginUser = asyncHandler(async (req, res) => {
    // remove password and refresh token from response
    // send response
    const { username, password, email } = req.body;
-   if (!username || !email) {
+   if (!(username || email)) {
       throw new apiError(400, "username or email is required")
    }
 
@@ -143,9 +152,9 @@ const loginUser = asyncHandler(async (req, res) => {
 
 
    const options = {
-
       httpOnly: true,
-      secure: true
+      secure: true,
+      maxAge: 3600000 // 1 hour
    }
 
    return res

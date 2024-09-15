@@ -9,7 +9,7 @@ const userSchema = new Schema({
       unique: true,
       lowercase: true,
       trim: true,
-      
+
    },
    email: {
       type: String,
@@ -20,7 +20,7 @@ const userSchema = new Schema({
       index: true,
       sparse: true,
       validate: {
-         validator: function(v) {
+         validator: function (v) {
             // Regex to validate email format
             return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
          },
@@ -70,7 +70,7 @@ userSchema.methods.isPasswordCorrect = async function (password) {
 }
 
 userSchema.methods.generateAccessToken = function () {
-   jwt.sign({// is short lived
+   return jwt.sign({// is short lived
       _id: this._id,
       email: this.email,
       username: this.username,
@@ -79,12 +79,16 @@ userSchema.methods.generateAccessToken = function () {
 }
 
 userSchema.methods.generateRefreshToken = function () {
-   jwt.sign({// long lived
-      _id: this._id,
-      email: this.email,
-      username: this.username,
-      fullname: this.fullname
-   }, process.env.REFRESH_TOKEN_SECRET, { expiresIn: process.env.REFRESH_TOKEN_EXPIRY })
+   return jwt.sign(
+      {
+         _id: this._id,
+
+      },
+      process.env.REFRESH_TOKEN_SECRET,
+      {
+         expiresIn: process.env.REFRESH_TOKEN_EXPIRY
+      }
+   )
 
 }
 const user = mongoose.model("User", userSchema)
