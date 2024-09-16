@@ -3,26 +3,27 @@ import { uploadOnCloudinary } from "../utils/cloudinary.js"
 import { userModel } from "../models/user.model.js"
 import { asyncHandler } from "../utils/asynhandler.js";
 import { apiError } from "../utils/apiError.js";
+import jwt from "jsonwebtoken";
 // import {upload} from "../middlewares/multer.model.js";  
 
 
 const generateAccessRefreshTokens = async (userId) => {
    // console.log("userId: ", userId);
    try {
-      
+
       const user = await userModel.findById(userId)
       console.log("user: ", user);
-      
+
       const refreshToken = user.generateRefreshToken()// post man sending so generate refresh token function is the problem
-      
+
       const accessToken = user.generateAccessToken()
       user.refreshToken = refreshToken
       user.accessToken = accessToken
       await user.save({ vaildateBeforeSave: false })
-      
+
       console.log("refreshToken: ", refreshToken);
       console.log("accessToken: ", accessToken);
-      
+
       return { accessToken, refreshToken }
 
 
@@ -154,7 +155,6 @@ const loginUser = asyncHandler(async (req, res) => {
    const options = {
       httpOnly: true,
       secure: true,
-      maxAge: 3600000 // 1 hour
    }
 
    return res
@@ -186,4 +186,44 @@ const logOut = asyncHandler(async (req, res) => {
 })
 
 
-export { registerUser, loginUser, logOut }  
+
+const refreshAccessToken = asyncHandler(async (req, res) => {
+
+   const incomingRefreshToken = req.cookies?.refreshToken || req.header("Authorization")?.replace("Bearer ", "") || req.body.refreshToken
+
+   if (!incomingRefreshToken) {// added ! so try without that some time if it doesnt work
+      throw new apiError(401, "Unauthorized request")
+   }
+
+   try {
+      const decodeToken = jwt.verify(incomingRefreshToken, process.env.REFRESH_TOKEN_SECRET)
+
+      const user = await userModel.findById(decodeToken?._id)
+      if (!user) {
+         throw new apiError(404, "User Decoded token not found")
+      }
+
+      if (user.refreshToken !== incomingRefreshToken) {
+         throw new apiError(401, "Unauthorized request")
+      }
+
+      const options = {
+         httpOnly: true,
+         secure: true
+      }
+
+      const { accessToken, NrefreshToken } = await generateAccessRefreshTokens(user?._id)
+
+      return res
+         .status(200)
+         .cookie("accessToken", accessToken, options)
+         .cookie("refreshToken", NrefreshToken, options)
+         .json(new apiResponse(200, { accessToken, NrefreshToken }, " Access token refreshed successfully"))
+
+   } catch (error) {
+      throw new apiError(401, "INvalid refresh token", error)
+
+   }
+
+})
+export { registerUser, loginUser, logOut, refreshAccessToken }  
