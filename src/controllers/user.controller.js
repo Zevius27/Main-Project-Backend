@@ -228,5 +228,142 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
 })
 
 
+const currentPasswordChange = asyncHandler(async (req, res) => {
+   const { currentPassword, newPassword } = req.body
 
-export { registerUser, loginUser, logOut, refreshAccessToken }  
+
+   const user = await userModel.findById(req.user._id)
+   if (!user) {
+      throw new apiError(404, "User not found in pass change")
+   }
+
+
+   const isPasswordCorrect = await user.isPasswordCorrect(currentPassword)
+
+   if (!isPasswordCorrect) {
+      throw new apiError(401, "Password is incorrect")
+   }
+
+
+   user.password = newPassword
+
+
+   await user.save({ vaildateBeforeSave: false })
+
+   return res
+      .status(200)
+      .json(new apiResponse(200, user, "Password changed successfully"))
+
+})
+
+const getCurrentUser = asyncHandler(async (req, res) => {
+   return res.status(200).json(
+      new apiResponse(200, req.user, "User found successfully")
+   )
+})
+
+
+const updateAccountDetails = asyncHandler(async (req, res) => {
+   const { fullname, email } = req.body
+   if (!(fullname || email)) {
+      throw new apiError(400, "fullname or email is required")
+   }
+
+   userModel.findByIdAndUpdate(req.user._id,
+      {
+         $set: {
+            fullname,
+            email
+         }
+      },
+      {
+         $new: true// you have used dollar sign they didnt
+      }
+
+   ).select("-password")
+
+
+   return res
+      .status(200)
+      .json(new apiResponse(200, req.user, "Account details updated successfully"))
+})
+
+
+const updateUserAvatar = asyncHandler(async (req, res) => {
+   const avatarLocalPath = req.file?.path; // we have asked for path but of what isnt speciied
+
+   if (!avatarLocalPath) {
+      throw new apiError(400, "Avatar is misssing")
+   }
+
+   const avatar = await uploadOnCloudinary(avatarLocalPath)
+
+   if (!avatar.url) {
+      throw new apiError(400, "Avatar is not uploaded")
+   }
+
+   const user = await userModel.findByIdAndUpdate(req.user?._id, {
+      $set: {
+         avatar: avatar.url
+      }
+   },
+      {
+         $new: true // you have used dollar sign they didnt
+      }
+   )
+   return res
+      .status(200)
+      .json(new apiResponse(200, user, "Avatar updated successfully"))
+})
+
+
+
+
+const updateUserCoverIMG = asyncHandler(async (req, res) => {
+   const coverIMGLocalPath = req.file?.path;// we have asked for path but of what isnt speciied
+
+   if (!coverIMGLocalPath) {
+      throw new apiError(400, "coverIMG is misssing")
+   }
+
+   const coverIMG = await uploadOnCloudinary(coverIMGLocalPath)
+
+   if (!coverIMG.url) {
+      throw new apiError(400, "coverIMG is not uploaded")
+   }
+
+   const user = await userModel.findByIdAndUpdate(req.user?._id, {
+      $set: {
+         coverIMG: coverIMG.url
+      }
+   },
+      {
+         $new: true // you have used dollar sign they didnt
+      }
+   )
+
+
+   return res
+      .status(200)
+      .json(new apiResponse(200, user, "coverIMG updated successfully"))
+})
+
+
+
+
+
+
+
+
+export {
+   registerUser,
+   loginUser,
+   logOut,
+   refreshAccessToken,
+   currentPasswordChange,
+   getCurrentUser,
+   updateAccountDetails,
+   updateUserAvatar,
+   updateUserCoverIMG,
+
+}    
