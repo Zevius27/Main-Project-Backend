@@ -295,7 +295,7 @@ const updateUserAvatar = asyncHandler(async (req, res) => {
    if (!avatarLocalPath) {
       throw new apiError(400, "Avatar is misssing")
    }
-
+   // TODO:delete old image from cloudinary || from ourselves?
    const avatar = await uploadOnCloudinary(avatarLocalPath)
 
    if (!avatar.url) {
@@ -314,7 +314,7 @@ const updateUserAvatar = asyncHandler(async (req, res) => {
    return res
       .status(200)
       .json(new apiResponse(200, user, "Avatar updated successfully"))
-})
+ })
 
 
 
@@ -351,6 +351,77 @@ const updateUserCoverIMG = asyncHandler(async (req, res) => {
 
 
 
+const getUserChannelProfile = asyncHandler(async (req, res) => {
+   const {username} = req.params
+
+   if(!username){
+      throw new apiError(400, "username is required")
+   }
+
+   const channel = await userModel.aggregate([
+      {
+         $match:{
+            username
+         }
+      },
+      {
+         $lookup:{
+            from:"Subscription",
+            localField:"_id",
+            foreignField:"channel",
+            as:"subscribers"
+         }
+      },
+      {
+         $lookup:{
+            from:"Subscription",
+            localField:"_id",
+            foreignField:"subscriber",
+            as:"subscribedTo"
+         }
+      },
+      {
+         $addFields:{
+            subscribersCount:{
+               $size:"$subscribers"
+            },
+            subscribedToCount:{
+               $size:"$subscribedTo"
+            },
+            isSubscribed:{
+               $cond:{
+                  if:{$in:[req.user?._id, "$subscribedTo"]},
+                  then:true,
+                  else:false
+               }
+            }
+         }
+      },
+      {
+         $project:{
+            fullname:1,
+            username:1,
+            subscribersCount:1,
+            subscribedToCount:1,
+            isSubscribed:1,
+            avatar:1,
+            coverIMG:1,
+            email:1,
+            createdAt:1
+         }
+      }
+   ])
+   // log it
+   // console.log("channel: ", channel);
+
+   if(!channel.length){
+      throw new apiError(404, "channel not found")
+   }
+   
+   return res
+      .status(200)
+      .json(new apiResponse(200, channel[0], "channel found successfully"))
+})
 
 
 
@@ -365,5 +436,5 @@ export {
    updateAccountDetails,
    updateUserAvatar,
    updateUserCoverIMG,
-
+   getUserChannelProfile
 }    
