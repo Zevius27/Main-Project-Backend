@@ -12,7 +12,7 @@ const generateAccessRefreshTokens = async (userId) => {
    try {
 
       const user = await userModel.findById(userId)
-      console.log("user: ", user);
+      // console.log("user: ", user);
 
       const refreshToken = user.generateRefreshToken()// post man sending so generate refresh token function is the problem
 
@@ -21,8 +21,8 @@ const generateAccessRefreshTokens = async (userId) => {
       user.accessToken = accessToken
       await user.save({ vaildateBeforeSave: false })
 
-      console.log("refreshToken: ", refreshToken);
-      console.log("accessToken: ", accessToken);
+      // console.log("refreshToken: ", refreshToken);
+      // console.log("accessToken: ", accessToken);
 
       return { accessToken, refreshToken }
 
@@ -66,7 +66,7 @@ const registerUser = asyncHandler(async (req, res) => {
    }
 
 
-   console.log("req.files:", req.body);
+   // console.log("req.files:", req.body);
    // const coverIMGLocalPath = req.files?.coverIMG[0]?.path;
 
    // console.log(  "coverIMG: ", req.files.coverIMG);
@@ -168,11 +168,17 @@ const loginUser = asyncHandler(async (req, res) => {
 
 
 const logOut = asyncHandler(async (req, res) => {
-   await userModel.findByIdAndUpdate(req.user._id, {
-      $set: {
-         refreshToken: undefined
+   await userModel.findByIdAndUpdate(
+      req.user._id,
+      {
+         $unset: {
+            refreshToken: 1
+         },
+      },
+      {
+         new: true,
       }
-   })
+   )
    const options = {
       httpOnly: true,
       secure: true
@@ -230,7 +236,10 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
 
 const currentPasswordChange = asyncHandler(async (req, res) => {
    const { currentPassword, newPassword } = req.body
-
+   console.log("req.body: ", req);
+   console.log("currentPassword: ", currentPassword);
+   console.log("newPassword: ", newPassword);
+   
 
    const user = await userModel.findById(req.user._id)
    if (!user) {
@@ -239,6 +248,8 @@ const currentPasswordChange = asyncHandler(async (req, res) => {
 
 
    const isPasswordCorrect = await user.isPasswordCorrect(currentPassword)
+   // console.log("isPasswordCorrect: ", isPasswordCorrect);
+   
 
    if (!isPasswordCorrect) {
       throw new apiError(401, "Password is incorrect")
@@ -314,7 +325,7 @@ const updateUserAvatar = asyncHandler(async (req, res) => {
    return res
       .status(200)
       .json(new apiResponse(200, user, "Avatar updated successfully"))
- })
+})
 
 
 
@@ -352,72 +363,72 @@ const updateUserCoverIMG = asyncHandler(async (req, res) => {
 
 
 const getUserChannelProfile = asyncHandler(async (req, res) => {
-   const {username} = req.params
+   const { username } = req.params
 
-   if(!username){
+   if (!username) {
       throw new apiError(400, "username is required")
    }
 
    const channel = await userModel.aggregate([
       {
-         $match:{
+         $match: {
             username
          }
       },
       {
-         $lookup:{
-            from:"Subscription",
-            localField:"_id",
-            foreignField:"channel",
-            as:"subscribers"
+         $lookup: {
+            from: "Subscription",
+            localField: "_id",
+            foreignField: "channel",
+            as: "subscribers"
          }
       },
       {
-         $lookup:{
-            from:"Subscription",
-            localField:"_id",
-            foreignField:"subscriber",
-            as:"subscribedTo"
+         $lookup: {
+            from: "Subscription",
+            localField: "_id",
+            foreignField: "subscriber",
+            as: "subscribedTo"
          }
       },
       {
-         $addFields:{
-            subscribersCount:{
-               $size:"$subscribers"
+         $addFields: {
+            subscribersCount: {
+               $size: "$subscribers"
             },
-            subscribedToCount:{
-               $size:"$subscribedTo"
+            subscribedToCount: {
+               $size: "$subscribedTo"
             },
-            isSubscribed:{
-               $cond:{
-                  if:{$in:[req.user?._id, "$subscribedTo"]},
-                  then:true,
-                  else:false
+            isSubscribed: {
+               $cond: {
+                  if: { $in: [req.user?._id, "$subscribedTo"] },
+                  then: true,
+                  else: false
                }
             }
          }
       },
       {
-         $project:{
-            fullname:1,
-            username:1,
-            subscribersCount:1,
-            subscribedToCount:1,
-            isSubscribed:1,
-            avatar:1,
-            coverIMG:1,
-            email:1,
-            createdAt:1
+         $project: {
+            fullname: 1,
+            username: 1,
+            subscribersCount: 1,
+            subscribedToCount: 1,
+            isSubscribed: 1,
+            avatar: 1,
+            coverIMG: 1,
+            email: 1,
+            createdAt: 1
          }
       }
    ])
    // log it
    // console.log("channel: ", channel);
 
-   if(!channel.length){
+   if (!channel.length) {
       throw new apiError(404, "channel not found")
    }
-   
+
    return res
       .status(200)
       .json(new apiResponse(200, channel[0], "channel found successfully"))
@@ -425,44 +436,44 @@ const getUserChannelProfile = asyncHandler(async (req, res) => {
 
 
 
-const getWatchHistory = asyncHandler(async(req,res)=>{
+const getWatchHistory = asyncHandler(async (req, res) => {
    const user = await userModel.aggregate([
       {
-         $match:{
+         $match: {
             _id: new mongoose.Types.ObjectId(req.user._id)
          }
       },
       {
-         $lookup:{ 
-            from:"Video",
-            localField:"watchHistory",
-            foreignField:"_id",
-            as:"watchHistory",
-            pipeline:[
+         $lookup: {
+            from: "Video",
+            localField: "watchHistory",
+            foreignField: "_id",
+            as: "watchHistory",
+            pipeline: [
                {
-                  $lookup:{
-                     from:"User",
-                     localField:"owner",
-                     foreignField:"_id",
-                     as:"owner",
-                     pipeline:[
+                  $lookup: {
+                     from: "User",
+                     localField: "owner",
+                     foreignField: "_id",
+                     as: "owner",
+                     pipeline: [
                         {
-                           $project:{
-                              fullname:1,
-                              username:1,
-                              avatar:1
+                           $project: {
+                              fullname: 1,
+                              username: 1,
+                              avatar: 1
                            }
                         }
                      ]
                   }
                }
-            ]        
+            ]
          }
       },
       {
-         $addFields:{
-            owner:{
-               $first:"$owner"
+         $addFields: {
+            owner: {
+               $first: "$owner"
             }
          }
       }
