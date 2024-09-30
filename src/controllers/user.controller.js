@@ -4,6 +4,7 @@ import { userModel } from "../models/user.model.js"
 import { asyncHandler } from "../utils/asynhandler.js";
 import { apiError } from "../utils/apiError.js";
 import jwt from "jsonwebtoken";
+import mongoose from "mongoose";
 // import {upload} from "../middlewares/multer.model.js";  
 
 
@@ -236,10 +237,10 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
 
 const currentPasswordChange = asyncHandler(async (req, res) => {
    const { currentPassword, newPassword } = req.body
-   console.log("req.body: ", req);
-   console.log("currentPassword: ", currentPassword);
-   console.log("newPassword: ", newPassword);
-   
+   // console.log("req.body: ", req.body);
+   // console.log("currentPassword: ", currentPassword);
+   // console.log("newPassword: ", newPassword);
+
 
    const user = await userModel.findById(req.user._id)
    if (!user) {
@@ -249,7 +250,7 @@ const currentPasswordChange = asyncHandler(async (req, res) => {
 
    const isPasswordCorrect = await user.isPasswordCorrect(currentPassword)
    // console.log("isPasswordCorrect: ", isPasswordCorrect);
-   
+
 
    if (!isPasswordCorrect) {
       throw new apiError(401, "Password is incorrect")
@@ -268,6 +269,8 @@ const currentPasswordChange = asyncHandler(async (req, res) => {
 })
 
 const getCurrentUser = asyncHandler(async (req, res) => {
+   console.log(req.body);
+   
    return res.status(200).json(
       new apiResponse(200, req.user, "User found successfully")
    )
@@ -302,7 +305,7 @@ const updateAccountDetails = asyncHandler(async (req, res) => {
 
 const updateUserAvatar = asyncHandler(async (req, res) => {
    const avatarLocalPath = req.file?.path; // we have asked for path but of what isnt speciied
-
+   console.log("avatarLocalPath: ", avatarLocalPath)
    if (!avatarLocalPath) {
       throw new apiError(400, "Avatar is misssing")
    }
@@ -363,7 +366,9 @@ const updateUserCoverIMG = asyncHandler(async (req, res) => {
 
 
 const getUserChannelProfile = asyncHandler(async (req, res) => {
-   const { username } = req.params
+   console.log("req.params: ", req.user);
+   
+   const { username } = req.params;
 
    if (!username) {
       throw new apiError(400, "username is required")

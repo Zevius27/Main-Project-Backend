@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { loginUser, logOut, registerUser, refreshAccessToken, currentPasswordChange, getCurrentUser, updateAccountDetails, updateUserAvatar, updateUserCoverIMG, getUserChannelProfile } from "../controllers/user.controller.js";
+import { loginUser, logOut, registerUser, refreshAccessToken, currentPasswordChange, getCurrentUser, updateAccountDetails, updateUserAvatar, updateUserCoverIMG, getUserChannelProfile , getWatchHistory} from "../controllers/user.controller.js";
 import { upload } from "../middlewares/multer.model.js";
 import { verifyJWT } from "../middlewares/auth.middleware.js";
 
@@ -21,6 +21,8 @@ router.route("/register").post(
    ]),
    registerUser)
 //http://localhost:8080/api/v1/users/register
+
+
 
 
 router.route("/login").post(loginUser)
@@ -51,7 +53,7 @@ router.route("/updateCoverIMG").patch(verifyJWT, upload.single("coverIMG"),updat
 
 router.route("/profile/:username").get(verifyJWT,getUserChannelProfile)
 
-router.route("/watchHistory/:id").get(verifyJWT)
+router.route("/watchHistory").get(verifyJWT,getWatchHistory)
 
 
 
